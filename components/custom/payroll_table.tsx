@@ -1,8 +1,11 @@
 "use client";
-import { read } from "fs";
+
 import { Button } from "../ui/button";
 import * as XLSX from 'xlsx';
-import { JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { createClient } from "@/utils/supabase/client";
+import { FaFileExcel } from "react-icons/fa"; // You can use any icon library
+import UploadPayrollFileButton from "./upload";
 
 
 const staticHeaders = [
@@ -44,79 +47,82 @@ function formatCurrency(value: any) {
 }
 
 export default function PayrollTable() {
-
-  const [data, setData] = useState<any[]>([]);
+  const [fileList, setFileList] = useState<any[]>([]);
+  const [payrollList, setPayrollList] = useState<any[]>([]);
   const [date, setDate] = useState<String>('');
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  // Function to handle the file upload
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  useEffect(() => {
+    const fetchPayrollFiles = async () => {
+      const supabase = createClient();
 
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      const bstr = evt.target?.result;
-      const wb = XLSX.read(bstr, { type: 'binary' });
 
-      // Read first sheet
-      const wsName = wb.SheetNames[0];
-      const ws = wb.Sheets[wsName];
-
-      // Convert sheet to JSON
-      const jsonData = XLSX.utils.sheet_to_json(ws, { header: 1 });
-      // Remove the first 4 indexes (rows)
-      const untrimmedData = (jsonData as any[][])
-
-      // Find the first field (column index) where a date value exists
-      let dateFieldIndex: number | null = null;
-      let dateFieldValue: any = null;
-      for (let row of untrimmedData) {
-        for (let col = 0; col < row.length; col++) {
-          const cell = row[col];
-          // Check for JS Date or parseable date string
-          if (
-            cell instanceof Date ||
-            (typeof cell === "string" && !isNaN(Date.parse(cell)) && cell.trim() !== "")
-          ) {
-            dateFieldIndex = col;
-            dateFieldValue = cell;
-            break;
-          }
-        }
-        if (dateFieldIndex !== null) break;
-      }
-      // You now have the column index in `dateFieldIndex` and the value in `dateFieldValue`
-      // Example: console.log
-      console.log("Date field index:", dateFieldIndex, "Sample value:", dateFieldValue);
-      setDate(dateFieldValue.toString());
-
-      setData(untrimmedData.slice(4).slice(4, (jsonData as any[][]).length - 13));
+      const {data} = await supabase.from("payroll_files").select("*");
+      console.log("Files in Storage:", data);
+      setFileList(data || []);
     };
+    fetchPayrollFiles();
+  }, [])
 
-    reader.readAsArrayBuffer(file);
+  // Function to handle file selection from Supabase
+  const handleSupabaseFileClick = async (fileName: string) => {
+    const supabase = createClient();
+    const { data } = supabase.storage.from("payroll-files").getPublicUrl(fileName);
+    if (!data.publicUrl) return;
+
+    const response = await fetch(data.publicUrl);
+    const buffer = await response.arrayBuffer();
+    const wb = XLSX.read(buffer, { type: "array" });
+    const wsName = wb.SheetNames[0];
+    const ws = wb.Sheets[wsName];
+    const jsonData = XLSX.utils.sheet_to_json(ws, { header: 1 });
+    const untrimmedData = jsonData as any[][];
+
+    // Find the first field (column index) where a date value exists
+    let dateFieldIndex: number | null = null;
+    let dateFieldValue: any = null;
+    for (let row of untrimmedData) {
+      for (let col = 0; col < row.length; col++) {
+        const cell = row[col];
+        if (
+          cell instanceof Date ||
+          (typeof cell === "string" && !isNaN(Date.parse(cell)) && cell.trim() !== "")
+        ) {
+          dateFieldIndex = col;
+          dateFieldValue = cell;
+          break;
+        }
+      }
+      if (dateFieldIndex !== null) break;
+    }
+    setDate(dateFieldValue ? dateFieldValue.toString() : "");
+    setPayrollList(untrimmedData.slice(4).slice(4, (jsonData as any[][]).length - 13));
   };
 
   return (
     <div className="flex flex-1 flex-col p-6">
       <div className="@container/main flex flex-1 flex-col gap-2">
-        <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-
-          <input
-            type="file"
-            accept=".xlsx,.xls"
-            style={{ display: "none" }}
-            id="inventory-file-input"
-            onChange={handleFileUpload}
-          />
-          <label htmlFor="inventory-file-input">
-            <Button asChild>
-              <span>View Payroll File</span>
-            </Button>
-          </label>
-          {/* In your Next.js component, use the 'data' array to render a table */}
-          {/* Example HTML table */}
-          {data.length > 0 && (
-            <div className="overflow-x-auto mt-4">
+        <div className="flex flex-col gap-2 py-2 md:gap-2 md:py-0">
+          <div className="flex gap-2 items-center">
+          </div>
+          {/* File List */}
+          {fileList.length > 0 && (
+            <div className="flex flex-col gap-2 w-full">
+              {fileList.map((file: any) => (
+                <div
+                  key={file.id}
+                  className="flex items-center justify-between bg-gray-50 rounded px-3 py-2 border hover:bg-gray-100 cursor-pointer w-full"
+                  onClick={() => handleSupabaseFileClick(file.filename)}
+                >
+                  <span className="truncate">{file.filename}</span>
+                  <FaFileExcel className="text-green-600 text-lg ml-2" />
+                </div>
+              ))}
+            </div>
+          )}
+          {/* Responsive Table */}
+          {payrollList.length > 0 && (
+            <div className="w-full h-full flex flex-col gap-4 overflow-x-auto">
               {/* Display the date at the top of the table */}
               {date && (
                 <div className="mb-2 text-base font-semibold text-gray-700">
@@ -139,7 +145,6 @@ export default function PayrollTable() {
                 <tbody>
                   {(() => {
                     const maxCols = staticHeaders.length;
-                    // List of headers to format as currency (case-insensitive, trimmed)
                     const currencyHeaders = [
                       "C.A.",
                       "SSS",
@@ -158,7 +163,7 @@ export default function PayrollTable() {
                       "Net Salary"
                     ].map(h => h.toLowerCase().trim());
 
-                    return data
+                    return payrollList
                       .filter(row => row[1] !== null && row[1] !== undefined && row[1] !== "")
                       .map((row, i) => (
                         <tr
@@ -196,12 +201,10 @@ export default function PayrollTable() {
               {/* Net Salary Total */}
               <div className="flex justify-start mt-4">
                 {(() => {
-                  // Find the Net Salary column index
                   const netSalaryIdx = staticHeaders.findIndex(
                     h => h.toLowerCase().trim() === "net salary".toLowerCase()
                   );
-                  // Sum all Net Salary values
-                  const totalNetSalary = data
+                  const totalNetSalary = payrollList
                     .filter(row => row[1] !== null && row[1] !== undefined && row[1] !== "")
                     .reduce((sum, row) => {
                       let value = row[netSalaryIdx];

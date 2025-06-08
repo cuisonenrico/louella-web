@@ -1,6 +1,5 @@
-
 import { AppSidebar } from "@/components/app-sidebar";
-import { SiteHeader } from "@/components/site-header";
+import DynamicSiteHeader from "@/components/custom/dynamic_site_header";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { createClient } from "@/utils/supabase/server";
 
@@ -23,7 +22,7 @@ export default async function ProtectedLayout({
                     avatar: 'string'
                 }} variant="inset" />
                 <SidebarInset>
-                    <SiteHeader siteHeader={'pathName.toString()'} />
+                    <DynamicSiteHeader />
                     {children}
                 </SidebarInset>
             </SidebarProvider>
