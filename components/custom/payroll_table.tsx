@@ -1,11 +1,9 @@
 "use client";
 
-import { Button } from "../ui/button";
 import * as XLSX from 'xlsx';
 import { useEffect, useState, useRef } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { FaFileExcel } from "react-icons/fa"; // You can use any icon library
-import UploadPayrollFileButton from "./upload";
 
 
 const staticHeaders = [
