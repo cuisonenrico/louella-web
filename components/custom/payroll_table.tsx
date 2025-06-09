@@ -79,6 +79,7 @@ export default function PayrollTable() {
     // Find the first field (column index) where a date value exists
     let dateFieldIndex: number | null = null;
     let dateFieldValue: any = null;
+    /* eslint-disable prefer-const */
     for (let row of untrimmedData) {
       for (let col = 0; col < row.length; col++) {
         const cell = row[col];

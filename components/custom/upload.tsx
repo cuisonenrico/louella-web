@@ -70,6 +70,7 @@ export default function UploadPayrollFileButton() {
       const branchName =
         getNextWord(untrimmedData[4][1], "BAKESHOP")?.replaceAll(",", "") ?? "";
       let dateFieldValue: any = null;
+      /* eslint-disable prefer-const */
       for (let row of untrimmedData) {
         for (let col = 0; col < row.length; col++) {
           const cell = row[col];
