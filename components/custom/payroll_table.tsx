@@ -25,7 +25,6 @@ const staticHeaders = [
   "Pag-Ibig",
   "SSSLoan",
   "C.A.",
-  "Hidden",
   "Net Salary",
 ];
 
