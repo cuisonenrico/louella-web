@@ -139,7 +139,7 @@ export function PayrollList({ staticHeaders }: PayrollListProps) {
           )}
           
           <Card className="overflow-hidden">
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto scrollbar-thin scrollbar-track-secondary scrollbar-thumb-primary hover:scrollbar-thumb-primary/80">
               <table className="w-full">
                 <thead>
                   <tr className="bg-sidebar-primary">
