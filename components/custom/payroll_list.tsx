@@ -4,10 +4,10 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { Card } from "@/components/ui/card";
 import { FaCalendarAlt } from "react-icons/fa";
-import { processPayrollFile } from "@/lib/payroll/process-payroll";
+import { processPayrollFile, processPayrollFromDB } from "@/lib/payroll/process-payroll";
 import { PayrollFileList } from "./payroll/PayrollFileList";
 import { PayrollTable } from "./payroll/PayrollTable";
-import { formatCurrency } from "@/lib/utils/format_utils";
+import { formatCurrency, formatPayrollPeriod } from "@/lib/utils/format_utils";
 
 interface PayrollListProps {
   staticHeaders: string[];
@@ -20,9 +20,15 @@ const currencyHeaders = [
   "DAILY rate", "Monthly rate", "Net Salary"
 ].map(h => h.toLowerCase().trim());
 
+interface PayrollFile {
+  id: string;
+  filename: string;
+  payroll_period_id?: number;
+}
+
 export function PayrollList({ staticHeaders }: PayrollListProps) {
   const [files, setFiles] = useState<any[]>([]);
-  const [selectedFile, setSelectedFile] = useState<string>("");
+  const [selectedFile, setSelectedFile] = useState<any>(null);
   const [payrollList, setPayrollList] = useState<any[]>([]);
   const [date, setDate] = useState<string>("");
 
@@ -35,12 +41,23 @@ export function PayrollList({ staticHeaders }: PayrollListProps) {
     fetchPayrollFiles();
   }, []);
 
-  const handleFileSelect = async (fileName: string) => {
+  const handleFileSelect = async (file: PayrollFile) => {
     try {
-      setSelectedFile(fileName);
-      const { date: fileDate, payrollData } = await processPayrollFile(fileName);
-      setDate(fileDate);
-      setPayrollList(payrollData);
+      setSelectedFile(file);
+      
+      // If file has payroll_period_id, get data from DB
+      if (file.payroll_period_id) {
+        const { date: fileDate, payrollData } = await processPayrollFromDB(file.payroll_period_id);
+        setDate(fileDate);
+        setPayrollList(payrollData);
+      } else {
+        // Fallback to file processing if no period ID
+        const { date: fileDate, payrollData } = await processPayrollFile(file.filename);
+        setDate(fileDate);
+        setPayrollList(payrollData);
+      }
+
+      
     } catch (error) {
       console.error("Error processing payroll file:", error);
     }
@@ -63,7 +80,7 @@ export function PayrollList({ staticHeaders }: PayrollListProps) {
       <PayrollFileList
         files={files}
         selectedFile={selectedFile}
-        onFileSelect={handleFileSelect}
+        onFileSelect={(file) => { void handleFileSelect(file); }}
       />
 
       {payrollList.length > 0 && (
@@ -72,7 +89,7 @@ export function PayrollList({ staticHeaders }: PayrollListProps) {
             <Card className="p-4">
               <div className="flex items-center gap-2 text-sidebar-foreground">
                 <FaCalendarAlt className="text-sidebar-primary" />
-                <span className="font-semibold">{date}</span>
+                <span className="font-semibold">{formatPayrollPeriod(date)} of {selectedFile?.branch}</span>
               </div>
             </Card>
           )}

@@ -9,8 +9,8 @@ function extractDateRange(str: string) {
   const match = str.match(/([A-Za-z]+)\s+(\d{1,2})-(\d{1,2}),\s*(\d{4})/);
   if (match) {
     const month = match[1];
-    const startDay = match[2];
-    const endDay = match[3];
+    const startDay = match[2].padStart(2, '0');  // Add leading zero if single digit
+    const endDay = match[3].padStart(2, '0');    // Add leading zero if single digit
     const year = match[4];
     return {
       startDate: `${month} ${startDay}, ${year}`,
@@ -21,18 +21,15 @@ function extractDateRange(str: string) {
 }
 
 function getNextWord(text: string, key: string) {
-  const words = text.split(/\s+/);
-  for (let i = 0; i < words.length - 1; i++) {
-    if (words[i].replace(/[.,!?]/g, "") === key) {
-      return words[i + 1].replaceAll("(", "").replaceAll(")", "");
-    }
-  }
-  return null;
+  const keyPattern = new RegExp(`${key}\\s+([^,]+)`);
+  const match = text.match(keyPattern);
+  return match ? match[1].trim().replace(/[()]/g, '') : null;
 }
 
 export default function UploadPayrollFileButton() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Detect mobile layout
   useEffect(() => {
@@ -46,181 +43,112 @@ export default function UploadPayrollFileButton() {
     inputRef.current?.click();
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const supabase = createClient();
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const processFile = async (file: File) => {
     if (!file.name.endsWith(".xlsx") && !file.name.endsWith(".xls")) {
-      alert("Please select an XLSX or XLS file.");
-      return;
+      throw new Error(`${file.name} is not a valid Excel file`);
     }
 
-    const reader = new FileReader();
-    reader.onload = async (evt) => {
-      const data = evt.target?.result;
-      if (!data) return;
-      const workbook = XLSX.read(data, { type: "array" });
-      const wsName = workbook.SheetNames[0];
-      const ws = workbook.Sheets[wsName];
-      const jsonData = XLSX.utils.sheet_to_json(ws, { header: 1 });
-      const untrimmedData = jsonData as any[][];
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = async (evt) => {
+        try {
+          const data = evt.target?.result;
+          if (!data) throw new Error("Failed to read file");
 
-      // Extract branch name and date range
-      const branchName =
-        getNextWord(untrimmedData[4][1], "BAKESHOP")?.replaceAll(",", "") ?? "";
-      let dateFieldValue: any = null;
-      /* eslint-disable prefer-const */
-      for (let row of untrimmedData) {
-        for (let col = 0; col < row.length; col++) {
-          const cell = row[col];
-          if (
-            cell instanceof Date ||
-            (typeof cell === "string" &&
-              !isNaN(Date.parse(cell)) &&
-              cell.trim() !== "")
-          ) {
-            dateFieldValue = cell;
-            break;
+          const workbook = XLSX.read(data, { type: "array" });
+          const wsName = workbook.SheetNames[0];
+          const ws = workbook.Sheets[wsName];
+          const jsonData = XLSX.utils.sheet_to_json(ws, { header: 1 });
+          const untrimmedData = jsonData as any[][];
+
+          // Extract branch name and date range
+          const branchName = getNextWord(untrimmedData[4][1], "from")?.replaceAll(",", "") ?? "";
+          const dateFieldValue = findDateInData(untrimmedData);
+          
+          const { startDate, endDate } = typeof dateFieldValue === "string" 
+            ? extractDateRange(dateFieldValue)
+            : { startDate: "", endDate: "" };
+
+          // Prepare safe file name parts
+          const safeBranch = branchName.replace(/\s+/g, "").replace(/,/g, "");
+          const safeStart = startDate.replace(/\s+/g, "").replace(/,/g, "");
+          const safeEnd = endDate.replace(/\s+/g, "").replace(/,/g, "");
+          const fileExt = file.name.endsWith(".xlsx") ? ".xlsx" : ".xls";
+
+          const supabase = createClient();
+
+          // Get or insert payroll period
+          const payrollPeriodId = await handlePayrollPeriod(supabase, branchName, startDate, endDate);
+          if (!payrollPeriodId) throw new Error("Failed to create payroll period");
+
+          const customFileName = `${safeBranch}_${payrollPeriodId}_${safeStart}_${safeEnd}${fileExt}`;
+
+          // Check for existing file
+          const { data: existingFile } = await supabase.storage
+            .from("payroll-files")
+            .list("", { search: customFileName });
+
+          if (existingFile?.some(f => f.name === customFileName)) {
+            throw new Error("File already exists");
           }
+
+          // Process and upload data
+          const filteredData = untrimmedData
+            .slice(7)
+            .slice(4, untrimmedData.length - 20)
+            .filter(row => row[1] !== null && row[1] !== undefined && row[1] !== "");
+
+          await uploadPayrollEntries(supabase, filteredData, payrollPeriodId, startDate, endDate);
+          await uploadFile(supabase, file, customFileName, branchName, payrollPeriodId);
+
+          resolve(customFileName);
+        } catch (error) {
+          reject(error);
         }
-        if (dateFieldValue) break;
-      }
+      };
+      reader.onerror = () => reject(new Error("Failed to read file"));
+      reader.readAsArrayBuffer(file);
+    });
+  };
 
-      let startDate = "",
-        endDate = "";
-      if (typeof dateFieldValue === "string") {
-        const range = extractDateRange(dateFieldValue);
-        startDate = range.startDate;
-        endDate = range.endDate;
-      }
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
 
-      // Prepare safe file name parts
-      const safeBranch = branchName.replace(/\s+/g, "").replace(/,/g, "");
-      const safeStart = startDate.replace(/\s+/g, "").replace(/,/g, "");
-      const safeEnd = endDate.replace(/\s+/g, "").replace(/,/g, "");
-      const fileExt = file.name.endsWith(".xlsx") ? ".xlsx" : ".xls";
+    setIsUploading(true);
+    const results: { file: string; status: 'success' | 'error'; message?: string }[] = [];
 
-      // --- The rest of your logic (insert period, entries, upload, etc) ---
-      // Get or insert payroll period
-      let payrollPeriodId: number | null = null;
-      try {
-        const { data: payrollPeriod } =
-          await supabase
-            .from("PayrollPeriod")
-            .select("id")
-            .eq("payroll_start", startDate)
-            .eq("payroll_end", endDate)
-            .eq("branch", branchName)
-            .maybeSingle();
-
-        if (payrollPeriod && payrollPeriod.id) {
-          payrollPeriodId = payrollPeriod.id;
-        } else {
-          const { data: insertedPeriod } = await supabase
-            .from("PayrollPeriod")
-            .insert({
-              payroll_start: startDate,
-              payroll_end: endDate,
-              branch: branchName,
-            })
-            .select("id")
-            .single();
-          if (insertedPeriod && insertedPeriod.id) {
-            payrollPeriodId = insertedPeriod.id;
-          } else {
-            alert("Failed to create payroll period.");
-            return;
-          }
+    try {
+      await Promise.all(files.map(async (file) => {
+        try {
+          const filename = await processFile(file);
+          results.push({ file: file.name, status: 'success' });
+        } catch (error) {
+          results.push({ 
+            file: file.name, 
+            status: 'error', 
+            message: error instanceof Error ? error.message : 'Unknown error' 
+          });
         }
-      } catch (error) {
-        alert("Error fetching or inserting payroll period: " + error);
-        return;
-      }
+      }));
 
-      // Now that payrollPeriodId is available, construct the custom file name
-      const customFileName = `${safeBranch}_${payrollPeriodId}_${safeStart}_${safeEnd}${fileExt}`;
-
-      // Check if file already exists in the bucket
-      const { data: existingFile, error: listError } = await supabase
-        .storage
-        .from("payroll-files")
-        .list("", { search: customFileName });
-
-      if (existingFile && existingFile.some(f => f.name === customFileName)) {
-        alert("This payroll file has already been uploaded. No records were written.");
-        e.target.value = "";
-        return;
-      }
-
-      // Filter and trim data
-      const filteredData = untrimmedData
-        .slice(7)
-        .slice(4, untrimmedData.length - 20)
-        .filter(
-          (row) => row[1] !== null && row[1] !== undefined && row[1] !== ""
-        );
-
-      // Insert payroll entries
-      for (const row of filteredData) {
-        const rowObj = {
-          payroll_period_id: payrollPeriodId,
-          payroll_start: startDate,
-          payroll_end: endDate,
-          employee: row[1] ?? "",
-          days_worked: row[2] ?? 0,
-          monthly_rate: row[3] ?? 0,
-          daily_rate: row[4] ?? 0,
-          basic_rate: row[5] ?? 0,
-          overtime_hrs: row[6] ?? 0,
-          overtime_amount: row[7] ?? 0,
-          holiday_no: row[8] ?? 0,
-          holiday_pay: row[9] ?? 0,
-          special_no: row[10] ?? 0,
-          special_pay: row[11] ?? 0,
-          rest_day_no: row[12] ?? 0,
-          rest_day_pay: row[13] ?? 0,
-          no_of_ns_hours: row[14] ?? 0,
-          nsd_pay: row[15] ?? 0,
-          gross_pay: row[16] ?? 0,
-          sss: row[17] ?? 0,
-          philhealth: row[18] ?? 0,
-          pagibig: row[19] ?? 0,
-          sssloan: row[20] ?? 0,
-          ca: row[21] ?? 0,
-          hidden: row[22] ?? 0,
-          net_salary: row[23] ?? 0,
-        };
-        const { error } = await supabase.from("PayrollEntry").insert([rowObj]);
-        if (error) {
-          console.error("Insert error:", error.message, rowObj);
-        }
-      }
-
-      // Upload file with custom name
-      const { error: uploadError } = await supabase.storage
-        .from("payroll-files")
-        .upload(customFileName, file, { upsert: true });
-      if (uploadError) {
-        alert("Upload failed: " + uploadError.message);
-        return;
-      }
-
-      // Insert file record
-      const { error: fileInsertError } = await supabase.from("payroll_files").insert({
-        filename: customFileName,
-        branch: branchName,
-        payroll_period_id: payrollPeriodId,
-        public_url: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/payroll-files/${customFileName}`,
-      });
-      if (fileInsertError) {
-        alert("File record insert failed: " + fileInsertError.message);
-      } else {
-        alert("File uploaded successfully!");
-      }
-      e.target.value = "";
-    };
-    reader.readAsArrayBuffer(file);
+      // Show summary
+      const successful = results.filter(r => r.status === 'success').length;
+      const failed = results.filter(r => r.status === 'error').length;
+      
+      alert(`Upload complete:\n${successful} files uploaded successfully\n${failed} files failed\n\n${
+        failed > 0 ? 'Failed files:\n' + results
+          .filter(r => r.status === 'error')
+          .map(r => `${r.file}: ${r.message}`)
+          .join('\n') : ''
+      }`);
+    } catch (error) {
+      console.error('Upload error:', error);
+      alert('Upload failed: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    } finally {
+      setIsUploading(false);
+      e.target.value = '';
+    }
   };
 
   return (
@@ -228,13 +156,103 @@ export default function UploadPayrollFileButton() {
       <input
         type="file"
         accept=".xlsx,.xls"
+        multiple
         ref={inputRef}
         style={{ display: "none" }}
         onChange={handleFileChange}
       />
-      <Button onClick={handleButtonClick} size={isMobile ? "icon" : "default"} className='mr-2'>
-        {isMobile ? <FaUpload /> : "Upload Payroll"}
+      <Button 
+        onClick={handleButtonClick} 
+        size={isMobile ? "icon" : "default"} 
+        className="mr-2"
+        disabled={isUploading}
+      >
+        {isMobile ? <FaUpload /> : isUploading ? "Uploading..." : "Upload Payroll"}
       </Button>
     </>
   );
+}
+
+// Helper functions
+function findDateInData(data: any[][]): string | null {
+  for (const row of data) {
+    for (const cell of row) {
+      if (cell instanceof Date || 
+         (typeof cell === "string" && !isNaN(Date.parse(cell)) && cell.trim())) {
+        return cell instanceof Date ? cell.toISOString() : cell;
+      }
+    }
+  }
+  return null;
+}
+
+async function handlePayrollPeriod(supabase: any, branch: string, startDate: string, endDate: string) {
+  const { data: payrollPeriod } = await supabase
+    .from("PayrollPeriod")
+    .select("id")
+    .eq("payroll_start", startDate)
+    .eq("payroll_end", endDate)
+    .eq("branch", branch)
+    .maybeSingle();
+
+  if (payrollPeriod?.id) return payrollPeriod.id;
+
+  const { data: insertedPeriod } = await supabase
+    .from("PayrollPeriod")
+    .insert({
+      payroll_start: startDate,
+      payroll_end: endDate,
+      branch,
+    })
+    .select("id")
+    .single();
+
+  return insertedPeriod?.id;
+}
+
+async function uploadPayrollEntries(supabase: any, data: any[], periodId: number, startDate: string, endDate: string) {
+  for (const row of data) {
+    const rowObj = {
+      payroll_period_id: periodId,
+      payroll_start: startDate,
+      payroll_end: endDate,
+      employee: row[1] ?? "",
+      days_worked: row[2] ?? 0,
+      monthly_rate: row[3] ?? 0,
+      daily_rate: row[4] ?? 0,
+      basic_rate: row[5] ?? 0,
+      overtime_hrs: row[6] ?? 0,
+      overtime_amount: row[7] ?? 0,
+      holiday_no: row[8] ?? 0,
+      holiday_pay: row[9] ?? 0,
+      special_no: row[10] ?? 0,
+      special_pay: row[11] ?? 0,
+      rest_day_no: row[12] ?? 0,
+      rest_day_pay: row[13] ?? 0,
+      no_of_ns_hours: row[14] ?? 0,
+      nsd_pay: row[15] ?? 0,
+      gross_pay: row[16] ?? 0,
+      sss: row[17] ?? 0,
+      philhealth: row[18] ?? 0,
+      pagibig: row[19] ?? 0,
+      sssloan: row[20] ?? 0,
+      ca: row[21] ?? 0,
+      hidden: row[22] ?? 0,
+      net_salary: row[23] ?? 0,
+    };
+    await supabase.from("PayrollEntry").insert([rowObj]);
+  }
+}
+
+async function uploadFile(supabase: any, file: File, fileName: string, branch: string, periodId: number) {
+  await supabase.storage
+    .from("payroll-files")
+    .upload(fileName, file, { upsert: true });
+
+  await supabase.from("payroll_files").insert({
+    filename: fileName,
+    branch: branch,
+    payroll_period_id: periodId,
+    public_url: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/payroll-files/${fileName}`,
+  });
 }
