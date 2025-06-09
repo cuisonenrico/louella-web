@@ -23,7 +23,14 @@ function extractDateRange(str: string) {
 function getNextWord(text: string, key: string) {
   const keyPattern = new RegExp(`${key}\\s+([^,]+)`);
   const match = text.match(keyPattern);
-  return match ? match[1].trim().replace(/[()]/g, '') : null;
+
+  let nextWord = match ? match[1].trim().replace(/[()]/g, '') : null;
+  if (text.includes('(CONTRACTUAL)')) {
+    nextWord = nextWord ? nextWord.concat('_(CONTRACTUAL)') : null;
+  } else if (text.includes('(INCOMPLETE)')) {
+    nextWord = nextWord ? nextWord.concat('_(INCOMPLETE)') : null;
+  }
+  return nextWord ?? null;
 }
 
 export default function UploadPayrollFileButton() {
@@ -63,9 +70,11 @@ export default function UploadPayrollFileButton() {
 
           // Extract branch name and date range
           const branchName = getNextWord(untrimmedData[4][1], "from")?.replaceAll(",", "") ?? "";
+          console.log("Branch Name:", String(untrimmedData[4][1]).includes('(CONTRACTUAL)'));
+          // console.log("Branch Name Extracted:", branchName);
           const dateFieldValue = findDateInData(untrimmedData);
-          
-          const { startDate, endDate } = typeof dateFieldValue === "string" 
+
+          const { startDate, endDate } = typeof dateFieldValue === "string"
             ? extractDateRange(dateFieldValue)
             : { startDate: "", endDate: "" };
 
@@ -99,7 +108,7 @@ export default function UploadPayrollFileButton() {
             .filter(row => row[1] !== null && row[1] !== undefined && row[1] !== "");
 
           await uploadPayrollEntries(supabase, filteredData, payrollPeriodId, startDate, endDate);
-          await uploadFile(supabase, file, customFileName, branchName, payrollPeriodId);
+          await uploadFile(supabase, file, customFileName, file.name.replaceAll('.xlsx', ''), payrollPeriodId);
 
           resolve(customFileName);
         } catch (error) {
@@ -124,10 +133,10 @@ export default function UploadPayrollFileButton() {
           const filename = await processFile(file);
           results.push({ file: file.name, status: 'success' });
         } catch (error) {
-          results.push({ 
-            file: file.name, 
-            status: 'error', 
-            message: error instanceof Error ? error.message : 'Unknown error' 
+          results.push({
+            file: file.name,
+            status: 'error',
+            message: error instanceof Error ? error.message : 'Unknown error'
           });
         }
       }));
@@ -135,13 +144,12 @@ export default function UploadPayrollFileButton() {
       // Show summary
       const successful = results.filter(r => r.status === 'success').length;
       const failed = results.filter(r => r.status === 'error').length;
-      
-      alert(`Upload complete:\n${successful} files uploaded successfully\n${failed} files failed\n\n${
-        failed > 0 ? 'Failed files:\n' + results
-          .filter(r => r.status === 'error')
-          .map(r => `${r.file}: ${r.message}`)
-          .join('\n') : ''
-      }`);
+
+      alert(`Upload complete:\n${successful} files uploaded successfully\n${failed} files failed\n\n${failed > 0 ? 'Failed files:\n' + results
+        .filter(r => r.status === 'error')
+        .map(r => `${r.file}: ${r.message}`)
+        .join('\n') : ''
+        }`);
     } catch (error) {
       console.error('Upload error:', error);
       alert('Upload failed: ' + (error instanceof Error ? error.message : 'Unknown error'));
@@ -161,9 +169,9 @@ export default function UploadPayrollFileButton() {
         style={{ display: "none" }}
         onChange={handleFileChange}
       />
-      <Button 
-        onClick={handleButtonClick} 
-        size={isMobile ? "icon" : "default"} 
+      <Button
+        onClick={handleButtonClick}
+        size={isMobile ? "icon" : "default"}
         className="mr-2"
         disabled={isUploading}
       >
@@ -177,8 +185,8 @@ export default function UploadPayrollFileButton() {
 function findDateInData(data: any[][]): string | null {
   for (const row of data) {
     for (const cell of row) {
-      if (cell instanceof Date || 
-         (typeof cell === "string" && !isNaN(Date.parse(cell)) && cell.trim())) {
+      if (cell instanceof Date ||
+        (typeof cell === "string" && !isNaN(Date.parse(cell)) && cell.trim())) {
         return cell instanceof Date ? cell.toISOString() : cell;
       }
     }
@@ -187,7 +195,7 @@ function findDateInData(data: any[][]): string | null {
 }
 
 async function handlePayrollPeriod(supabase: any, branch: string, startDate: string, endDate: string) {
-  const { data: payrollPeriod } = await supabase
+  const { data: payrollPeriod , error} = await supabase
     .from("PayrollPeriod")
     .select("id")
     .eq("payroll_start", startDate)
@@ -195,9 +203,14 @@ async function handlePayrollPeriod(supabase: any, branch: string, startDate: str
     .eq("branch", branch)
     .maybeSingle();
 
+    if (error) {
+    console.error("Error fetching payroll period:", error);
+    throw new Error("Failed to fetch payroll period");
+  }
+
   if (payrollPeriod?.id) return payrollPeriod.id;
 
-  const { data: insertedPeriod } = await supabase
+  const { data: insertedPeriod, error: insertError } = await supabase
     .from("PayrollPeriod")
     .insert({
       payroll_start: startDate,
@@ -206,6 +219,11 @@ async function handlePayrollPeriod(supabase: any, branch: string, startDate: str
     })
     .select("id")
     .single();
+
+    if (insertError) {
+    console.error("Error inserting payroll period:", insertError);
+    throw new Error("Failed to insert payroll period");
+  }
 
   return insertedPeriod?.id;
 }
