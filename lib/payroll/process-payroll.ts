@@ -1,10 +1,6 @@
 import * as XLSX from 'xlsx';
 import { createClient } from "@/utils/supabase/client";
-
-interface ProcessedPayroll {
-  date: string;
-  payrollData: any[][];
-}
+import { ProcessedPayroll, PayrollEntry } from "@/types/payroll";
 
 export async function processPayrollFile(fileName: string): Promise<ProcessedPayroll> {
   const supabase = createClient();
@@ -42,5 +38,64 @@ export async function processPayrollFile(fileName: string): Promise<ProcessedPay
   return {
     date: dateFieldValue ? dateFieldValue.toString() : "",
     payrollData: untrimmedData.slice(4).slice(4, untrimmedData.length - 13)
+  };
+}
+
+export async function processPayrollFromDB(payrollPeriodId: number): Promise<ProcessedPayroll> {
+  const supabase = createClient();
+  
+  // First get the payroll period details
+  const { data: periodData, error: periodError } = await supabase
+    .from('PayrollPeriod')
+    .select('*')
+    .eq('id', payrollPeriodId)
+    .single();
+    
+  if (periodError) throw new Error('Failed to fetch payroll period');
+  if (!periodData) throw new Error('Payroll period not found');
+
+  // Then get all entries for this period
+  const { data: entries, error: entriesError } = await supabase
+    .from('PayrollEntry')
+    .select('*')
+    .eq('payroll_period_id', payrollPeriodId)
+    .order('id');
+
+    console.log("Payroll entries data:", entries);
+
+  if (entriesError) throw new Error('Failed to fetch payroll entries');
+  if (!entries) throw new Error('No entries found');
+
+  // Convert structured data back to array format to match excel structure
+  const payrollData = entries.map((entry: PayrollEntry) => [
+    '', // Empty cell for numbering
+    entry.employee,
+    entry.days_worked,
+    entry.monthly_rate,
+    entry.daily_rate,
+    entry.basic_rate,
+    entry.overtime_hrs,
+    entry.overtime_amount,
+    entry.holiday_no,
+    entry.holiday_pay,
+    entry.special_no,
+    entry.special_pay,
+    entry.rest_day_no,
+    entry.rest_day_pay,
+    entry.no_of_ns_hours,
+    entry.nsd_pay,
+    entry.gross_pay,
+    entry.ca,
+    entry.sss,
+    entry.philhealth,
+    entry.pagibig,
+    entry.sssloan,
+    entry.net_salary,
+    '' // Empty cell for signature
+  ]);
+
+  return {
+    date: `${periodData.payroll_start} - ${periodData.payroll_end}`,
+    payrollData
   };
 }
