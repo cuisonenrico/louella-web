@@ -16,6 +16,8 @@ export default async function Home() {
     const { data } = await supabase.auth.getUser();
     if (data?.user != null) {
       redirect("/dashboard");
+    }else{
+      redirect("/auth/login");
     }
   return (
     <main className="min-h-screen flex flex-col items-center">
