@@ -19,7 +19,7 @@ const eslintConfig = [
       "@typescript-eslint/explicit-module-boundary-types": "off", // Don't require explicit return types
       "@typescript-eslint/no-unused-vars" : "off", // Disable unused vars in TypeScript
       "@typescript-eslint/no-wrapper-object-types": "off", // Allow wrapper object types like 'String', 'Number', etc.
-      "@typescript-eslint/prefer-const": "off", // Allow wrapper object types like 'String', 'Number', etc.
+      "prefer-const": "off",
     },
   },
 ];

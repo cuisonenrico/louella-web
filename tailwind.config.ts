@@ -15,15 +15,15 @@ export default {
   			foreground: 'hsl(var(--foreground))',
   			card: {
   				DEFAULT: 'hsl(var(--card))',
-  				foreground: 'hsl(var(--card-foreground))'
+  				foreground: '#F28C28'
   			},
   			popover: {
   				DEFAULT: 'hsl(var(--popover))',
   				foreground: 'hsl(var(--popover-foreground))'
   			},
   			primary: {
-  				DEFAULT: 'hsl(var(--primary))',
-  				foreground: 'hsl(var(--primary-foreground))'
+  				DEFAULT: '#F28C28	',
+  				foreground: '#FFFFFF'  // Using white as foreground for contrast
   			},
   			secondary: {
   				DEFAULT: 'hsl(var(--secondary))',
@@ -41,9 +41,9 @@ export default {
   				DEFAULT: 'hsl(var(--destructive))',
   				foreground: 'hsl(var(--destructive-foreground))'
   			},
-  			border: 'hsl(var(--border))',
+  			border: '#F28C28',
   			input: 'hsl(var(--input))',
-  			ring: 'hsl(var(--ring))',
+  			ring: '#F28C28',
   			chart: {
   				'1': 'hsl(var(--chart-1))',
   				'2': 'hsl(var(--chart-2))',
@@ -52,14 +52,14 @@ export default {
   				'5': 'hsl(var(--chart-5))'
   			},
   			sidebar: {
-  				DEFAULT: 'hsl(var(--sidebar-background))',
-  				foreground: 'hsl(var(--sidebar-foreground))',
-  				primary: 'hsl(var(--sidebar-primary))',
-  				'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
-  				accent: 'hsl(var(--sidebar-accent))',
-  				'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
-  				border: 'hsl(var(--sidebar-border))',
-  				ring: 'hsl(var(--sidebar-ring))'
+  				DEFAULT: '#FFFFFF', // White background
+  				foreground: '#4A5568', // Slate gray for regular text
+  				primary: '#F28C28', // Your orange color
+  				'primary-foreground': '#FFFFFF', // White text on orange
+  				accent: '#FFF3E6', // Light orange for accent areas
+  				'accent-foreground': '#F28C28', // Orange text on light background
+  				border: '#FFE5CC', // Light warm border color
+  				ring: '#F28C28' // Orange for focus rings
   			}
   		},
   		borderRadius: {
