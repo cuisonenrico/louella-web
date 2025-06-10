@@ -292,7 +292,7 @@ export function ChartAreaInteractive({
             </SelectContent>
           </Select>
 
-          <Select value={selectedBranch} onValueChange={setSelectedBranch}>
+          {/* <Select value={selectedBranch} onValueChange={setSelectedBranch}>
             <SelectTrigger className="w-40">
               <SelectValue placeholder="All Branches" />
             </SelectTrigger>
@@ -302,7 +302,7 @@ export function ChartAreaInteractive({
                 <SelectItem key={branch} value={branch}>{branch}</SelectItem>
               ))}
             </SelectContent>
-          </Select>
+          </Select> */}
 
           <ToggleGroup
             type="single"
@@ -377,7 +377,7 @@ export function ChartAreaInteractive({
               tickFormatter={(value) => {
                 const date = new Date(value)
                 return date.toLocaleDateString("en-US", {
-                  month: "short"
+                  month: "long"
                 })
               }}
             />
@@ -385,14 +385,17 @@ export function ChartAreaInteractive({
               tickLine={false}
               axisLine={false}
               tickMargin={8}
-              tickFormatter={(value) =>
-                new Intl.NumberFormat('en-PH', {
+              tickFormatter={(value) => {
+                const formatter = new Intl.NumberFormat('en-PH', {
                   style: 'currency',
                   currency: 'PHP',
                   minimumFractionDigits: 0,
                   maximumFractionDigits: 0,
-                }).format(value)
-              }
+                  notation: 'compact',
+                  compactDisplay: 'short'
+                });
+                return formatter.format(value);
+              }}
             />
             <ChartTooltip
               cursor={false}
