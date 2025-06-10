@@ -35,68 +35,241 @@ interface PayrollData {
   branch: string
 }
 
+interface C2ValeData {
+  date: string
+  expenses: number
+  branch: string
+}
+
 interface ChartAreaInteractiveProps {
   data: PayrollData[]
+  c2ValeData?: C2ValeData[]
+  previousExpensesData?: PayrollData[]
   title?: string
 }
 
+const PRIMARY_COLOR = "#F28C28"
+const SECONDARY_COLOR = "#CD5C5C"
+const C2_VALE_COLOR = "#10B981" // Green color for C2 Vale
+
+// Dummy C2 Vale data for 2024 and 2025
+const dummyC2ValeData: C2ValeData[] = [
+  // 2024 data
+  { date: "2024-01-01", expenses: 35000.50, branch: "All Branches" },
+  { date: "2024-02-01", expenses: 42500.75, branch: "All Branches" },
+  { date: "2024-03-01", expenses: 38750.25, branch: "All Branches" },
+  { date: "2024-04-01", expenses: 41200.80, branch: "All Branches" },
+  { date: "2024-05-01", expenses: 39800.60, branch: "All Branches" },
+  { date: "2024-06-01", expenses: 44300.90, branch: "All Branches" },
+  { date: "2024-07-01", expenses: 46750.40, branch: "All Branches" },
+  { date: "2024-08-01", expenses: 43900.70, branch: "All Branches" },
+  { date: "2024-09-01", expenses: 41500.85, branch: "All Branches" },
+  { date: "2024-10-01", expenses: 45200.95, branch: "All Branches" },
+  { date: "2024-11-01", expenses: 47800.65, branch: "All Branches" },
+  { date: "2024-12-01", expenses: 52100.45, branch: "All Branches" },
+  
+  // 2025 data
+  { date: "2025-01-01", expenses: 121023.23, branch: "All Branches" },
+  { date: "2025-02-01", expenses: 98240.97, branch: "All Branches" },
+  { date: "2025-03-01", expenses: 0.0, branch: "All Branches" },
+  { date: "2025-04-01", expenses: 48750.65, branch: "All Branches" },
+  { date: "2025-05-01", expenses: 51300.90, branch: "All Branches" },
+]
+
+// Dummy payroll data with previous period values
+const dummyPayrollData: PayrollData[] = [
+  // 2024 data
+  { date: "2024-01-01", expenses: 85000.50, branch: "All Branches" },
+  { date: "2024-02-01", expenses: 92500.75, branch: "All Branches" },
+  { date: "2024-03-01", expenses: 88750.25, branch: "All Branches" },
+  { date: "2024-04-01", expenses: 91200.80, branch: "All Branches" },
+  { date: "2024-05-01", expenses: 89800.60, branch: "All Branches" },
+  { date: "2024-06-01", expenses: 94300.90, branch: "All Branches" },
+  { date: "2024-07-01", expenses: 96750.40, branch: "All Branches" },
+  { date: "2024-08-01", expenses: 93900.70, branch: "All Branches" },
+  { date: "2024-09-01", expenses: 91500.85, branch: "All Branches" },
+  { date: "2024-10-01", expenses: 95200.95, branch: "All Branches" },
+  { date: "2024-11-01", expenses: 97800.65, branch: "All Branches" },
+  { date: "2024-12-01", expenses: 102100.45, branch: "All Branches" },
+  
+  // 2025 data
+  { date: "2025-01-01", expenses: 105038.23, branch: "All Branches" },
+  { date: "2025-02-01", expenses: 110240.97, branch: "All Branches" },
+  { date: "2025-03-01", expenses: 108200.80, branch: "All Branches" },
+  { date: "2025-04-01", expenses: 112750.65, branch: "All Branches" },
+  { date: "2025-05-01", expenses: 115300.90, branch: "All Branches" },
+]
+
 const chartConfig = {
-  payroll: {
-    label: "Payroll Expenses",
-  },
   expenses: {
-    label: "Total Expenses",
-    color: "hsl(var(--chart-1))",
+    label: "Payroll ",
+    color: PRIMARY_COLOR,
+  },
+  previousExpenses: {
+    label: "Total ",
+    color: SECONDARY_COLOR,
+  },
+  c2Vale: {
+    label: "C2 Vale",
+    color: C2_VALE_COLOR,
   },
 } satisfies ChartConfig
 
-const MONTHS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
-
-export function ChartAreaInteractive({ data, title = "Payroll Expenses" }: ChartAreaInteractiveProps) {
+export function ChartAreaInteractive({ 
+  data, 
+  c2ValeData = dummyC2ValeData, 
+  previousExpensesData,
+  title = "Payroll Expenses" 
+}: ChartAreaInteractiveProps) {
   const isMobile = useIsMobile()
   const [timeRange, setTimeRange] = React.useState("6m")
   const [selectedBranch, setSelectedBranch] = React.useState("all")
   const [selectedYear, setSelectedYear] = React.useState(new Date().getFullYear().toString())
 
+  // Calculate previous expenses as sum of current data and c2Vale data
+  const calculatedPreviousExpenses = React.useMemo(() => {
+    const summedData = new Map<string, PayrollData>();
+
+    // Add current data
+    data.forEach(item => {
+      summedData.set(item.date, {
+        date: item.date,
+        expenses: item.expenses,
+        branch: item.branch
+      });
+    });
+
+    // Add c2Vale data to the sum
+    c2ValeData.forEach(item => {
+      const existing = summedData.get(item.date);
+      if (existing) {
+        existing.expenses += item.expenses;
+      } else {
+        summedData.set(item.date, {
+          date: item.date,
+          expenses: item.expenses,
+          branch: item.branch
+        });
+      }
+    });
+
+    return Array.from(summedData.values()).sort((a, b) => 
+      new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+  }, [data, c2ValeData]);
+
+  // Use calculated sum or provided previous expenses data
+  const finalPreviousExpenses = previousExpensesData || calculatedPreviousExpenses;
+
   React.useEffect(() => {
     if (isMobile) {
       setTimeRange("1m")
     }
-  }, [isMobile])
 
-  // Get unique years from data
+    console.log("Current Data:", data);
+    console.log("C2 Vale Data:", c2ValeData);
+    console.log("Previous Expenses Data (calculated):", finalPreviousExpenses);
+  }, [isMobile, data, c2ValeData, finalPreviousExpenses])
+
+  // Get unique years from all three datasets
   const years = React.useMemo(() => {
-    return Array.from(new Set(data.map(item =>
-      new Date(item.date).getFullYear().toString()
+    const allDates = [
+      ...data.map(item => item.date),
+      ...c2ValeData.map(item => item.date),
+      ...finalPreviousExpenses.map(item => item.date)
+    ]
+    return Array.from(new Set(allDates.map(date =>
+      new Date(date).getFullYear().toString()
     ))).sort((a, b) => b.localeCompare(a)) // Sort descending
-  }, [data])
+  }, [data, c2ValeData, finalPreviousExpenses])
 
   const filteredData = React.useMemo(() => {
-    // First filter the data based on year and branch
-    const filtered = data.filter((item) => {
+    // Filter current payroll data
+    const filteredCurrent = data.filter((item) => {
       const date = new Date(item.date)
       const matchesBranch = selectedBranch === "all" || item.branch === selectedBranch
       const matchesYear = date.getFullYear().toString() === selectedYear
       return matchesBranch && matchesYear
     });
 
-    // Apply time range filter if needed
-    const today = new Date();
-    let monthsToSubtract = 6;
-    if (timeRange === "3m") monthsToSubtract = 3;
-    else if (timeRange === "1m") monthsToSubtract = 1;
+    // Filter C2 Vale data
+    const filteredC2Vale = c2ValeData.filter((item) => {
+      const date = new Date(item.date)
+      const matchesBranch = selectedBranch === "all" || item.branch === selectedBranch
+      const matchesYear = date.getFullYear().toString() === selectedYear
+      return matchesBranch && matchesYear
+    });
 
-    const startDate = new Date();
-    startDate.setMonth(today.getMonth() - monthsToSubtract);
+    // Filter previous expenses data
+    const filteredPrevious = finalPreviousExpenses.filter((item) => {
+      const date = new Date(item.date)
+      const matchesBranch = selectedBranch === "all" || item.branch === selectedBranch
+      const matchesYear = date.getFullYear().toString() === selectedYear
+      return matchesBranch && matchesYear
+    });
 
-    // Return only months that have data
-    return filtered
+    // Merge all three datasets by date
+    const mergedData = new Map();
+
+    // Add current payroll data
+    filteredCurrent.forEach(item => {
+      const dateKey = item.date;
+      mergedData.set(dateKey, {
+        date: dateKey,
+        expenses: item.expenses,
+        previousExpenses: 0,
+        c2Vale: 0,
+        branch: item.branch
+      });
+    });
+
+    // Add previous expenses data
+    filteredPrevious.forEach(item => {
+      const dateKey = item.date;
+      const existing = mergedData.get(dateKey);
+      if (existing) {
+        existing.previousExpenses = item.expenses; // Use expenses field from previous data
+      } else {
+        mergedData.set(dateKey, {
+          date: dateKey,
+          expenses: 0,
+          previousExpenses: item.expenses,
+          c2Vale: 0,
+          branch: item.branch
+        });
+      }
+    });
+
+    // Add C2 Vale data
+    filteredC2Vale.forEach(item => {
+      const dateKey = item.date;
+      const existing = mergedData.get(dateKey);
+      if (existing) {
+        existing.c2Vale = item.expenses;
+      } else {
+        mergedData.set(dateKey, {
+          date: dateKey,
+          expenses: 0,
+          previousExpenses: 0,
+          c2Vale: item.expenses,
+          branch: item.branch
+        });
+      }
+    });
+
+    // Convert back to array and sort
+    return Array.from(mergedData.values())
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [data, timeRange, selectedBranch, selectedYear])
+  }, [data, c2ValeData, finalPreviousExpenses, timeRange, selectedBranch, selectedYear])
 
   const branches = React.useMemo(() => {
-    return Array.from(new Set(data.map(item => item.branch)))
-  }, [data])
+    const allBranches = [
+      ...data.map(item => item.branch),
+      ...c2ValeData.map(item => item.branch),
+      ...finalPreviousExpenses.map(item => item.branch)
+    ]
+    return Array.from(new Set(allBranches))
+  }, [data, c2ValeData, finalPreviousExpenses])
 
   return (
     <Card className="@container/card">
@@ -104,7 +277,7 @@ export function ChartAreaInteractive({ data, title = "Payroll Expenses" }: Chart
         <CardTitle>{title}</CardTitle>
         <CardDescription>
           <span className="@[540px]/card:block hidden">
-            Payroll expenses for the last {timeRange === "6m" ? "6" : timeRange === "3m" ? "3" : "1"} month(s)
+            Payroll expenses comparison for the last {timeRange === "6m" ? "6" : timeRange === "3m" ? "3" : "1"} month(s)
           </span>
         </CardDescription>
         <div className="absolute right-4 top-4 flex gap-2">
@@ -160,12 +333,36 @@ export function ChartAreaInteractive({ data, title = "Payroll Expenses" }: Chart
               <linearGradient id="fillExpenses" x1="0" y1="0" x2="0" y2="1">
                 <stop
                   offset="5%"
-                  stopColor="var(--color-expenses)"
+                  stopColor={PRIMARY_COLOR}
                   stopOpacity={0.8}
                 />
                 <stop
                   offset="95%"
-                  stopColor="var(--color-expenses)"
+                  stopColor={PRIMARY_COLOR}
+                  stopOpacity={0.1}
+                />
+              </linearGradient>
+              <linearGradient id="fillPreviousExpenses" x1="0" y1="0" x2="0" y2="1">
+                <stop
+                  offset="5%"
+                  stopColor={SECONDARY_COLOR}
+                  stopOpacity={0.8}
+                />
+                <stop
+                  offset="95%"
+                  stopColor={SECONDARY_COLOR}
+                  stopOpacity={0.1}
+                />
+              </linearGradient>
+              <linearGradient id="fillC2Vale" x1="0" y1="0" x2="0" y2="1">
+                <stop
+                  offset="5%"
+                  stopColor={C2_VALE_COLOR}
+                  stopOpacity={0.8}
+                />
+                <stop
+                  offset="95%"
+                  stopColor={C2_VALE_COLOR}
                   stopOpacity={0.1}
                 />
               </linearGradient>
@@ -212,10 +409,24 @@ export function ChartAreaInteractive({ data, title = "Payroll Expenses" }: Chart
               }
             />
             <Area
+              dataKey="previousExpenses"
+              type="monotone"
+              fill="url(#fillPreviousExpenses)"
+              stroke={SECONDARY_COLOR}
+              strokeDasharray="5 5"
+            />
+            <Area
+              dataKey="c2Vale"
+              type="monotone"
+              fill="url(#fillC2Vale)"
+              stroke={C2_VALE_COLOR}
+              strokeDasharray="3 3"
+            />
+            <Area
               dataKey="expenses"
               type="monotone"
               fill="url(#fillExpenses)"
-              stroke="var(--color-expenses)"
+              stroke={PRIMARY_COLOR}
             />
           </AreaChart>
         </ChartContainer>

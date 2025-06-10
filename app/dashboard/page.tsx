@@ -114,6 +114,9 @@ export default function Page() {
       <div className="@container/main flex flex-1 flex-col gap-2">
         <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
           <div className="px-4 lg:px-6">
+            {/** Chart showing payroll expenses overview 
+             * add c2ValeData prop to ChartAreaInteractive component soon when it is available
+            */}
             <ChartAreaInteractive
               data={payrollData}
               title="Payroll Expenses Overview"
