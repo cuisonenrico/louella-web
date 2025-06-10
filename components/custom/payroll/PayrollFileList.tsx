@@ -6,9 +6,12 @@ import { FaFileExcel, FaFolder, FaFolderOpen, FaChevronRight, FaChevronDown } fr
 import { groupFilesByDate } from "@/lib/utils/file-utils";
 import { formatPayrollFileName } from "@/lib/utils/format_utils";
 
-interface PayrollFile {
+export interface PayrollFile {
   id: string;
   filename: string;
+  created_at: string;
+  public_url: string;
+  branch: string;
   payroll_period_id?: number; // Optional, used for files with payroll data
 }
 
@@ -22,7 +25,6 @@ export function PayrollFileList({ files, selectedFile, onFileSelect }: PayrollFi
   const [expandedYears, setExpandedYears] = useState<Set<string>>(new Set());
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
   const [expandedBranches, setExpandedBranches] = useState<Set<string>>(new Set());
-  
   const groupedFiles = groupFilesByDate(files);
   
   const toggleYear = (year: string) => {
