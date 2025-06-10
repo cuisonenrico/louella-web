@@ -30,8 +30,6 @@ export const extractBranchFromWorksheet = (ws: XLSX.WorkSheet): string | null =>
 export const extractDateFromWorksheet = (ws: XLSX.WorkSheet): string | null => {
   const range = XLSX.utils.decode_range(ws['!ref'] || 'A1:Z100');
 
-  console.log(`Searching for date in range: ${range.s.r} to ${Math.min(range.e.r, 50)}`);
-
   for (let row = range.s.r; row <= Math.min(range.e.r, 50); row++) {
     for (let col = range.s.c; col <= range.e.c; col++) {
       const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
@@ -40,18 +38,11 @@ export const extractDateFromWorksheet = (ws: XLSX.WorkSheet): string | null => {
       if (cell && cell.v && typeof cell.v === 'string') {
         const text = cell.v.toString();
 
-        // Log all text that contains period-related keywords
-        if (text.toLowerCase().includes('period')) {
-          console.log(`Found cell ${cellAddress} with period text: "${text}"`);
-        }
-
         if (text.includes('For the period of') || text.includes('period of')) {
-          console.log(`Found date-related text in ${cellAddress}: ${text}`);
           let cleanedText = text.replace(/For the period of|period of/i, '').trim();
 
           // Normalize spaces - replace multiple spaces with single spaces
           cleanedText = cleanedText.replace(/\s+/g, ' ').trim();
-          console.log(`Cleaned text for date extraction: "${cleanedText}"`);
 
           // More flexible regex patterns to handle various formats with extra spaces
           const patterns = [
@@ -63,7 +54,6 @@ export const extractDateFromWorksheet = (ws: XLSX.WorkSheet): string | null => {
           for (let i = 0; i < patterns.length; i++) {
             const pattern = patterns[i];
             const match = cleanedText.match(pattern);
-            console.log(`Pattern ${i + 1} (${pattern}) result:`, match);
 
             if (match) {
               let month, endDay, year;
@@ -85,19 +75,13 @@ export const extractDateFromWorksheet = (ws: XLSX.WorkSheet): string | null => {
 
               // Validate and correct the date
               const correctedDate = validateAndCorrectDate(cleanMonth, cleanEndDay, cleanYear);
-              console.log(`Successfully extracted and corrected end date: "${correctedDate}"`);
               return correctedDate;
             }
           }
-
-          // If no patterns matched, log the cleaned text for debugging
-          console.log(`No date patterns matched for cleaned text: "${cleanedText}"`);
         }
       }
     }
   }
-
-  console.log('No date found in any cell');
   return null;
 };
 
@@ -108,10 +92,6 @@ export const validateAndCorrectDate = (month: string, day: number, year: number)
   
   // If the day exceeds the last day of the month, use the last valid day
   const correctedDay = Math.min(day, lastDayOfMonth);
-  
-  if (correctedDay !== day) {
-    console.log(`Date correction: ${month} ${day}, ${year} → ${month} ${correctedDay}, ${year} (${month} ${year} only has ${lastDayOfMonth} days)`);
-  }
   
   return `${month} ${correctedDay}, ${year}`;
 };
@@ -234,16 +214,11 @@ export class PayrollFileProcessor {
 
   async processFile(file: File): Promise<string> {
     try {
-      console.log(`Starting to process file: ${file.name}`);
-
       if (!file.name.match(/\.(xlsx|xls)$/i)) {
         throw new Error(`${file.name} is not a valid Excel file`);
       }
 
-      console.log('Reading file as array buffer...');
       const arrayBuffer = await file.arrayBuffer();
-
-      console.log('Parsing Excel workbook...');
       const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: "array" });
 
       if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
@@ -251,17 +226,10 @@ export class PayrollFileProcessor {
       }
 
       const ws = workbook.Sheets[workbook.SheetNames[0]];
-      console.log(`Using worksheet: ${workbook.SheetNames[0]}`);
 
       // Extract information from worksheet content
-      console.log('Extracting branch name...');
       const rawBranchName = extractBranchFromWorksheet(ws);
-
-      console.log('Extracting date...');
       const endDate = extractDateFromWorksheet(ws);
-
-      console.log(`Processing file: ${file.name}`);
-      console.log(`Raw branch: ${rawBranchName}, End date: ${endDate}`);
 
       if (!rawBranchName) {
         throw new Error(`Could not extract branch name from file: ${file.name}. Please check if the file contains "WE HEREBY ACKNOWLEDGE to have received from [BRANCH NAME]" text.`);
@@ -272,12 +240,9 @@ export class PayrollFileProcessor {
       }
 
       // Normalize branch name
-      console.log('Normalizing branch name...');
       const branchName = normalizeBranchName(rawBranchName);
-      console.log(`Normalized branch: ${branchName}`);
 
       // Calculate start date (assuming bi-monthly: 1-15 or 16-end of month)
-      console.log('Calculating start date...');
       const endDateObj = new Date(endDate);
 
       if (isNaN(endDateObj.getTime())) {
@@ -295,49 +260,37 @@ export class PayrollFileProcessor {
         startDate = `${endDateObj.toLocaleString('default', { month: 'long' })} 16, ${endDateObj.getFullYear()}`;
       }
 
-      console.log(`Period: ${startDate} to ${endDate}`);
-
       // Generate safe filename
-      console.log('Generating filename...');
       const safeBranch = branchName.replace(/[\s,&()]/g, "");
       const safeDate = endDate.replace(/[\s,]/g, "");
       const fileExt = file.name.match(/\.xlsx$/i) ? ".xlsx" : ".xls";
 
-      console.log('Handling payroll period...');
       const periodId = await this.payrollService.handlePayrollPeriod(branchName, startDate, endDate);
       const customFileName = `${safeBranch}_${periodId}_${safeDate}${fileExt}`;
 
       // Check for existing file
-      console.log('Checking if file exists...');
       if (await this.payrollService.checkFileExists(customFileName)) {
         throw new Error("File already exists");
       }
 
       // Process data
-      console.log('Processing worksheet data...');
       const worksheetData = processWorksheetData(ws);
-      console.log(`Found ${worksheetData.length} employee records`);
 
       if (worksheetData.length === 0) {
         throw new Error('No employee data found in the worksheet. Please check the file format.');
       }
 
-      console.log('Creating payroll entries...');
-      console.log('HEREE: ', worksheetData);
       const payrollEntries = createPayrollEntries(worksheetData, periodId, startDate, endDate);
       
       // Upload in parallel where possible
-      console.log('Saving to database and uploading file...');
       await Promise.all([
         this.payrollService.batchInsertEntries(payrollEntries),
         this.payrollService.uploadFile(file, customFileName, branchName, periodId)
       ]);
 
-      console.log(`Successfully processed file: ${customFileName}`);
       return customFileName;
 
     } catch (error) {
-      console.error(`Error processing file ${file.name}:`, error);
       throw error; // Re-throw to preserve the original error
     }
   }
@@ -354,7 +307,6 @@ export class PayrollFileProcessor {
             await this.processFile(file);
             return { file: file.name, status: 'success' as const };
           } catch (error) {
-            console.error(`Failed to process ${file.name}:`, error);
             const errorMessage = error instanceof Error ? error.message : `Unknown error: ${String(error)}`;
             return {
               file: file.name,
