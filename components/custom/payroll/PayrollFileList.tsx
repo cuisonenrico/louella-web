@@ -27,6 +27,12 @@ export function PayrollFileList({ files, selectedFile, onFileSelect }: PayrollFi
   const [expandedBranches, setExpandedBranches] = useState<Set<string>>(new Set());
   const groupedFiles = groupFilesByDate(files);
   
+  // Month order for sorting (January first)
+  const monthOrder = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+
   const toggleYear = (year: string) => {
     setExpandedYears(prev => {
       const next = new Set(prev);
@@ -88,7 +94,11 @@ export function PayrollFileList({ files, selectedFile, onFileSelect }: PayrollFi
               
               {expandedYears.has(year) && (
                 <div className="ml-4 flex flex-col gap-1">
-                  {Array.from(months.entries()).sort(([a], [b]) => b.localeCompare(a)).map(([month, branches]) => (
+                  {Array.from(months.entries()).sort(([a], [b]) => {
+                    const aIndex = monthOrder.indexOf(a);
+                    const bIndex = monthOrder.indexOf(b);
+                    return aIndex - bIndex;
+                  }).map(([month, branches]) => (
                     <div key={`${year}-${month}`} className="flex flex-col gap-1">
                       <Button
                         variant="ghost"
