@@ -1,5 +1,5 @@
 import { createClient } from "@/utils/supabase/client"
-import { PayrollEntry } from "@/types/payroll"
+import { PayrollEntry } from "@/lib/types/payroll"
 
 export interface PayrollData {
   date: string

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
-import { payrollService, type PayrollData } from "@/services/payroll.service"
-import { PayrollEntry } from "@/types/payroll"
+import { payrollService, type PayrollData } from "@/lib/services/payroll.service"
+import { PayrollEntry } from "@/lib/types/payroll"
 
 interface DashboardData {
   payrollData: PayrollData[]

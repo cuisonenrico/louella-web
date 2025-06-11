@@ -1,7 +1,7 @@
 "use client";
 import { usePathname } from "next/navigation";
-import { SiteHeader } from "@/components/site-header";
-import UploadPayrollFileButton from "./upload";
+import { SiteHeader } from "@/components/shadcn/site-header";
+import UploadPayrollFileButton from "./payroll/upload";
 
 export default function DynamicSiteHeader() {
   const pathname = usePathname();

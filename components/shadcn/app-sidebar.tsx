@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
 import {
   ArrowUpCircleIcon,
   BarChartIcon,
@@ -10,11 +10,11 @@ import {
   SearchIcon,
   SettingsIcon,
   UsersIcon,
-} from "lucide-react"
+} from "lucide-react";
 
-import { NavMain } from "@/components/nav-main"
-import { NavSecondary } from "@/components/nav-secondary"
-import { NavUser } from "@/components/nav-user"
+import { NavMain } from "@/components/shadcn/nav-main";
+import { NavSecondary } from "@/components/shadcn/nav-secondary";
+import { NavUser } from "@/components/shadcn/nav-user";
 import {
   Sidebar,
   SidebarContent,
@@ -23,7 +23,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 
 const data = {
   user: {
@@ -32,7 +32,6 @@ const data = {
     avatar: "/avatars/shadcn.jpg",
   },
   navMain: [
-    
     {
       title: "Dashboard",
       url: "/dashboard",
@@ -54,7 +53,7 @@ const data = {
       icon: UsersIcon,
     },
   ],
-  
+
   navSecondary: [
     {
       title: "Settings",
@@ -72,18 +71,17 @@ const data = {
       icon: SearchIcon,
     },
   ],
-  
-}
+};
 
 type User = {
-  name: string
-  email: string
-  avatar: string
-}
+  name: string;
+  email: string;
+  avatar: string;
+};
 
 type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
-  user: User
-}
+  user: User;
+};
 
 export function AppSidebar({ user, ...props }: AppSidebarProps) {
   return (
@@ -111,5 +109,5 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
         <NavUser user={user} />
       </SidebarFooter>
     </Sidebar>
-  )
+  );
 }

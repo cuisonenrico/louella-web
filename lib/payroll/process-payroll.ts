@@ -1,6 +1,6 @@
 import * as XLSX from 'xlsx';
 import { createClient } from "@/utils/supabase/client";
-import { ProcessedPayroll, PayrollEntry } from "@/types/payroll";
+import { ProcessedPayroll, PayrollEntry } from "@/lib/types/payroll";
 
 export async function processPayrollFile(fileName: string): Promise<ProcessedPayroll> {
   const supabase = createClient();

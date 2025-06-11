@@ -1,14 +1,17 @@
-import { ChartAreaInteractive } from "@/components/chart-area-interactive"
-import { EmployeePayrollDashboard } from "@/components/custom/dashboard/employee-payroll-dashboard"
-import { type PayrollData } from "@/services/payroll.service"
-import { PayrollEntry } from "@/types/payroll"
+import { ChartAreaInteractive } from "@/components/shadcn/chart-area-interactive";
+import { EmployeePayrollDashboard } from "@/components/custom/dashboard/employee-payroll-dashboard";
+import { type PayrollData } from "@/lib/services/payroll.service";
+import { PayrollEntry } from "@/lib/types/payroll";
 
 interface DashboardContentProps {
-  payrollData: PayrollData[]
-  payrollEntries: PayrollEntry[]
+  payrollData: PayrollData[];
+  payrollEntries: PayrollEntry[];
 }
 
-export function DashboardContent({ payrollData, payrollEntries }: DashboardContentProps) {
+export function DashboardContent({
+  payrollData,
+  payrollEntries,
+}: DashboardContentProps) {
   return (
     <div className="flex flex-1 flex-col">
       <div className="@container/main flex flex-1 flex-col gap-2">
@@ -26,5 +29,5 @@ export function DashboardContent({ payrollData, payrollEntries }: DashboardConte
         </div>
       </div>
     </div>
-  )
+  );
 }

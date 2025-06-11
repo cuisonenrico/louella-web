@@ -1,5 +1,5 @@
 import * as XLSX from "xlsx";
-import { PayrollEntry } from "@/types/payroll";
+import { PayrollEntry } from "@/lib/types/payroll";
 import { PayrollService } from "./payroll-service";
 
 // Utility functions

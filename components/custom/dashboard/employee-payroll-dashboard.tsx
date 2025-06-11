@@ -1,31 +1,45 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useMemo } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { PayrollEntry } from "@/types/payroll"
-import { Users, ChevronLeft, ChevronRight } from "lucide-react"
-import { usePayrollFilters } from "@/hooks/use-payroll-filters"
-import { usePagination } from "@/hooks/use-pagination"
-import { PayrollFilters } from "./payroll-filters"
-import { PayrollMobileView } from "./payroll-mobile-view"
-import { PayrollDesktopTable } from "./payroll-desktop-table"
+import { useState, useEffect, useMemo } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { PayrollEntry } from "@/lib/types/payroll";
+import { Users, ChevronLeft, ChevronRight } from "lucide-react";
+import { usePayrollFilters } from "@/hooks/use-payroll-filters";
+import { usePagination } from "@/hooks/use-pagination";
+import { PayrollFilters } from "./payroll-filters";
+import { PayrollMobileView } from "./payroll-mobile-view";
+import { PayrollDesktopTable } from "./payroll-desktop-table";
 
 interface EmployeePayrollDashboardProps {
-  entries?: PayrollEntry[]
+  entries?: PayrollEntry[];
 }
 
 const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('en-PH', {
-    style: 'currency',
-    currency: 'PHP',
+  return new Intl.NumberFormat("en-PH", {
+    style: "currency",
+    currency: "PHP",
     minimumFractionDigits: 2,
-  }).format(value)
-}
+  }).format(value);
+};
 
-export function EmployeePayrollDashboard({ entries = [] }: EmployeePayrollDashboardProps) {
+export function EmployeePayrollDashboard({
+  entries = [],
+}: EmployeePayrollDashboardProps) {
   const {
     filters,
     setters,
@@ -34,22 +48,22 @@ export function EmployeePayrollDashboard({ entries = [] }: EmployeePayrollDashbo
     isFiltering,
     clearFilters,
     getFilterDisplayText,
-  } = usePayrollFilters({ entries })
+  } = usePayrollFilters({ entries });
 
   const pagination = usePagination({
     totalItems: filteredEntries.length,
     initialItemsPerPage: 10,
-  })
+  });
 
   // Reset pagination when filters change
   useEffect(() => {
-    pagination.reset()
-  }, [filteredEntries.length])
+    pagination.reset();
+  }, [filteredEntries.length]);
 
-  const currentEntries = useMemo(() => 
-    filteredEntries.slice(pagination.startIndex, pagination.endIndex),
+  const currentEntries = useMemo(
+    () => filteredEntries.slice(pagination.startIndex, pagination.endIndex),
     [filteredEntries, pagination.startIndex, pagination.endIndex]
-  )
+  );
 
   return (
     <Card className="@container/card">
@@ -59,7 +73,9 @@ export function EmployeePayrollDashboard({ entries = [] }: EmployeePayrollDashbo
             <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
           </div>
           <div>
-            <CardTitle className="text-xl font-semibold">Employee Payroll Records</CardTitle>
+            <CardTitle className="text-xl font-semibold">
+              Employee Payroll Records
+            </CardTitle>
             <CardDescription>
               Search and filter payroll entries by employee, branch, and period
             </CardDescription>
@@ -79,14 +95,17 @@ export function EmployeePayrollDashboard({ entries = [] }: EmployeePayrollDashbo
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 mt-6">
           <div className="flex flex-col sm:flex-row sm:items-center gap-2">
             <Badge variant="secondary" className="text-sm w-fit">
-              {filteredEntries.length} {filteredEntries.length === 1 ? 'employee' : 'employees'}
+              {filteredEntries.length}{" "}
+              {filteredEntries.length === 1 ? "employee" : "employees"}
             </Badge>
             <span className="text-sm text-muted-foreground">
               for {getFilterDisplayText()}
             </span>
             {filteredEntries.length > 0 && (
               <span className="text-sm text-muted-foreground">
-                Showing {pagination.startIndex + 1}-{Math.min(pagination.endIndex, filteredEntries.length)} of {filteredEntries.length}
+                Showing {pagination.startIndex + 1}-
+                {Math.min(pagination.endIndex, filteredEntries.length)} of{" "}
+                {filteredEntries.length}
               </span>
             )}
           </div>
@@ -96,7 +115,9 @@ export function EmployeePayrollDashboard({ entries = [] }: EmployeePayrollDashbo
             <span className="text-sm text-muted-foreground">Show</span>
             <Select
               value={pagination.itemsPerPage.toString()}
-              onValueChange={(value) => pagination.setItemsPerPage(parseInt(value))}
+              onValueChange={(value) =>
+                pagination.setItemsPerPage(parseInt(value))
+              }
             >
               <SelectTrigger className="w-20 h-8">
                 <SelectValue />
@@ -142,11 +163,11 @@ export function EmployeePayrollDashboard({ entries = [] }: EmployeePayrollDashbo
                 <ChevronLeft className="h-4 w-4" />
                 Previous
               </Button>
-              
+
               <div className="text-sm text-muted-foreground">
                 {pagination.currentPage} / {pagination.totalPages}
               </div>
-              
+
               <Button
                 variant="outline"
                 size="sm"
@@ -178,44 +199,57 @@ export function EmployeePayrollDashboard({ entries = [] }: EmployeePayrollDashbo
                 </Button>
 
                 <div className="flex items-center gap-1">
-                  {Array.from({ length: Math.min(3, pagination.totalPages) }, (_, i) => {
-                    let pageNumber: number
-                    if (pagination.totalPages <= 3) {
-                      pageNumber = i + 1
-                    } else if (pagination.currentPage <= 2) {
-                      pageNumber = i + 1
-                    } else if (pagination.currentPage >= pagination.totalPages - 1) {
-                      pageNumber = pagination.totalPages - 2 + i
-                    } else {
-                      pageNumber = pagination.currentPage - 1 + i
+                  {Array.from(
+                    { length: Math.min(3, pagination.totalPages) },
+                    (_, i) => {
+                      let pageNumber: number;
+                      if (pagination.totalPages <= 3) {
+                        pageNumber = i + 1;
+                      } else if (pagination.currentPage <= 2) {
+                        pageNumber = i + 1;
+                      } else if (
+                        pagination.currentPage >=
+                        pagination.totalPages - 1
+                      ) {
+                        pageNumber = pagination.totalPages - 2 + i;
+                      } else {
+                        pageNumber = pagination.currentPage - 1 + i;
+                      }
+
+                      return (
+                        <Button
+                          key={pageNumber}
+                          variant={
+                            pagination.currentPage === pageNumber
+                              ? "default"
+                              : "outline"
+                          }
+                          size="sm"
+                          onClick={() => pagination.goToPage(pageNumber)}
+                          className="h-8 w-8 p-0"
+                        >
+                          {pageNumber}
+                        </Button>
+                      );
                     }
-
-                    return (
-                      <Button
-                        key={pageNumber}
-                        variant={pagination.currentPage === pageNumber ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => pagination.goToPage(pageNumber)}
-                        className="h-8 w-8 p-0"
-                      >
-                        {pageNumber}
-                      </Button>
-                    )
-                  })}
-
-                  {pagination.totalPages > 3 && pagination.currentPage < pagination.totalPages - 1 && (
-                    <>
-                      <span className="text-muted-foreground">...</span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => pagination.goToPage(pagination.totalPages)}
-                        className="h-8 w-8 p-0"
-                      >
-                        {pagination.totalPages}
-                      </Button>
-                    </>
                   )}
+
+                  {pagination.totalPages > 3 &&
+                    pagination.currentPage < pagination.totalPages - 1 && (
+                      <>
+                        <span className="text-muted-foreground">...</span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            pagination.goToPage(pagination.totalPages)
+                          }
+                          className="h-8 w-8 p-0"
+                        >
+                          {pagination.totalPages}
+                        </Button>
+                      </>
+                    )}
                 </div>
 
                 <Button
@@ -257,5 +291,5 @@ export function EmployeePayrollDashboard({ entries = [] }: EmployeePayrollDashbo
         }
       `}</style>
     </Card>
-  )
+  );
 }

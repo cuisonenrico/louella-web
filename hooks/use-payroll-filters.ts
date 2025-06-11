@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react"
-import { PayrollEntry } from "@/types/payroll"
+import { PayrollEntry } from "@/lib/types/payroll"
 
 interface UsePayrollFiltersProps {
   entries: PayrollEntry[]

@@ -1,7 +1,7 @@
-import { DeployButton } from "@/components/deploy-button";
-import { EnvVarWarning } from "@/components/env-var-warning";
-import { AuthButton } from "@/components/auth-button";
-import { ThemeSwitcher } from "@/components/theme-switcher";
+import { DeployButton } from "@/components/shadcn/deploy-button";
+import { EnvVarWarning } from "@/components/shadcn/env-var-warning";
+import { AuthButton } from "@/components/shadcn/auth-button";
+import { ThemeSwitcher } from "@/components/shadcn/theme-switcher";
 import { hasEnvVars } from "@/utils/utils";
 import Link from "next/link";
 
