@@ -20,10 +20,10 @@ import { Badge } from "@/components/ui/badge";
 import { PayrollEntry } from "@/lib/types/payroll";
 import { Users, ChevronLeft, ChevronRight } from "lucide-react";
 import { usePayrollFilters } from "@/hooks/use-payroll-filters";
-import { usePagination } from "@/hooks/use-pagination";
 import { PayrollFilters } from "./payroll-filters";
 import { PayrollMobileView } from "./payroll-mobile-view";
 import { PayrollDesktopTable } from "./payroll-desktop-table";
+import { usePagination } from "@/hooks/use-pagination";
 
 interface EmployeePayrollDashboardProps {
   entries?: PayrollEntry[];
