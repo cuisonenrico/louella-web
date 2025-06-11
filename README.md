@@ -1,4 +1,9 @@
-# Louella Bakery - Payroll & Inventory Management System
+<div align="center">
+    <img src="https://github.com/user-attachments/assets/b80c2ac1-8739-487a-89aa-e84291ae9893" alt="Louella Icon" width="100"  style="vertical-align: middle; margin-right: 10px;">
+    <h1 align="center">
+      Louella Bakery - Payroll & Inventory Management System
+    </h1>
+</div>
 
 <p align="center">
   <img src="https://img.shields.io/badge/Next.js-14.0-black?style=flat-square&logo=next.js" alt="Next.js">
