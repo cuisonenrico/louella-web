@@ -12,7 +12,7 @@
   <img src="https://img.shields.io/badge/Tailwind-3.0-cyan?style=flat-square&logo=tailwindcss" alt="Tailwind CSS">
 </p>
 
-A comprehensive web application for managing payroll and inventory operations at Louella Bakery. Built with Next.js 14 and Supabase for real-time data management and secure authentication.
+A comprehensive web application for managing payroll, inventory, and expense operations at Louella Bakery. Built with Next.js 14 and Supabase for real-time data management and secure authentication.
 
 ## 🌟 Features
 
@@ -24,10 +24,21 @@ A comprehensive web application for managing payroll and inventory operations at
 - **Payroll Analytics**: Visual charts showing payroll expenses over time
 - **Multi-Branch Support**: Handle payroll for different bakery branches
 
+### 💰 Other Expenses Management
+
+- **Expense Tracking**: Record and manage miscellaneous business expenses
+- **Real-time CRUD Operations**: Add, edit, and delete expenses with instant updates
+- **Advanced Filtering**: Search by description, filter by branch, and date ranges
+- **Mobile-Responsive Design**: Optimized for both desktop and mobile devices
+- **Expense Statistics**: View total expenses, filtered counts, and pagination info
+- **Multi-Branch Support**: Track expenses across different bakery locations
+- **Currency Formatting**: Proper Philippine peso formatting for all amounts
+
 ### 📈 Dashboard & Analytics
 
 - **Payroll Expenses Overview**: Interactive charts displaying yearly payroll trends
 - **Employee Search & Filter**: Search by employee, branch, and time period
+- **Expense Analytics**: Track and analyze other business expenses
 - **Data Export**: Export payroll data for reporting purposes
 - **Real-time Updates**: Live data synchronization across all users
 
@@ -41,8 +52,10 @@ A comprehensive web application for managing payroll and inventory operations at
 
 - **Responsive Design**: Works seamlessly on desktop and mobile devices
 - **Orange Theme**: Custom branding with `#F28C28` as the primary color
-- **Sidebar Navigation**: Intuitive navigation between Dashboard, Inventory, Analytics, and Payroll
+- **Sidebar Navigation**: Intuitive navigation between Dashboard, Inventory, Analytics, Payroll, and Other Expenses
 - **shadcn/ui Components**: Beautiful, accessible UI components
+- **Loading States**: Smooth loading animations and debounced search
+- **Toast Notifications**: User-friendly success and error messages
 
 ## 🛠️ Tech Stack
 
@@ -53,6 +66,7 @@ A comprehensive web application for managing payroll and inventory operations at
 - **UI Components**: [shadcn/ui](https://ui.shadcn.com/)
 - **File Processing**: XLSX for Excel file parsing
 - **TypeScript**: Full type safety throughout the application
+- **State Management**: React hooks with debounced inputs for optimal performance
 
 ## 🚀 Getting Started
 
@@ -97,6 +111,7 @@ A comprehensive web application for managing payroll and inventory operations at
 
    - `PayrollPeriod` - Stores payroll periods and date ranges
    - `PayrollEntry` - Stores individual employee payroll records
+   - `OtherExpenses` - Stores miscellaneous business expenses
    - Create a storage bucket named `payroll-files` for file uploads
 
 5. **Run the development server**
@@ -114,10 +129,14 @@ louella-web/
 ├── app/                    # Next.js App Router pages
 │   ├── auth/              # Authentication pages
 │   ├── dashboard/         # Main dashboard
+│   │   └── other-expenses/ # Other expenses management
 │   └── payroll/           # Payroll management pages
 ├── components/            # Reusable UI components
+│   └── custom/
+│       └── other-expenses/ # Expense management components
 ├── lib/                   # Utility functions and types
 │   ├── payroll/          # Payroll processing logic
+│   ├── services/         # API service layers
 │   └── types/            # TypeScript type definitions
 ├── utils/
 │   └── supabase/         # Supabase client configurations
@@ -134,7 +153,7 @@ louella-web/
 The application uses Supabase for:
 
 - **Authentication**: Cookie-based auth with middleware protection
-- **Database**: PostgreSQL for storing payroll and employee data
+- **Database**: PostgreSQL for storing payroll, employee, and expense data
 - **Storage**: File uploads for Excel payroll files
 - **Real-time**: Live updates across all connected clients
 
@@ -144,6 +163,14 @@ The application uses Supabase for:
 - **Data Validation**: Automatic validation and error handling
 - **Branch Detection**: Intelligent branch name extraction from files
 - **Period Management**: Bi-monthly payroll period calculation
+
+### Other Expenses Management
+
+- **CRUD Operations**: Full create, read, update, delete functionality for expenses
+- **Smart Filtering**: Real-time search with debounced inputs for performance
+- **Pagination**: Efficient data loading with customizable items per page
+- **Mobile Optimization**: Separate mobile and desktop views for optimal UX
+- **Loading States**: Smooth animations during data operations
 
 ### Security Features
 
@@ -180,6 +207,16 @@ primary: {
 - `days_worked`, `monthly_rate`, `basic_rate`: Payroll calculations
 - `gross_pay`, `net_salary`: Final amounts
 - Various deduction fields (SSS, PhilHealth, Pag-IBIG, etc.)
+
+### OtherExpenses
+
+- `id`: Primary key
+- `date`: Date of expense
+- `amount`: Expense amount (decimal)
+- `description`: Description of the expense
+- `branch`: Branch where expense occurred
+- `created_at`: Timestamp of record creation
+- `updated_at`: Timestamp of last update
 
 ## 🤝 Contributing
 
