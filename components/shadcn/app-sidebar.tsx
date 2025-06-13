@@ -4,6 +4,7 @@ import * as React from "react";
 import {
   ArrowUpCircleIcon,
   BarChartIcon,
+  DollarSignIcon,
   FolderIcon,
   HelpCircleIcon,
   LayoutDashboardIcon,
@@ -51,6 +52,11 @@ const data = {
       title: "Payroll",
       url: "/dashboard/payroll",
       icon: UsersIcon,
+    },
+    {
+      title: "Other Expenses",
+      url: "/dashboard/other-expenses",
+      icon: DollarSignIcon,
     },
   ],
 

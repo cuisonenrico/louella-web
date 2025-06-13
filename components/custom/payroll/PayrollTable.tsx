@@ -27,7 +27,6 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
-import { PayrollRow } from "./PayrollRow";
 
 interface PayrollTableProps {
   payrollList: any[][];
