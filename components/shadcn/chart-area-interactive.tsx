@@ -51,11 +51,11 @@ const OTHER_EXPENSES_COLOR = "#8B5CF6"; // Purple color for Other Expenses
 
 const chartConfig = {
   expenses: {
-    label: "Payroll ",
+    label: "Payroll",
     color: PRIMARY_COLOR,
   },
   previousExpenses: {
-    label: "Total ",
+    label: "Total",
     color: SECONDARY_COLOR,
   },
   otherExpenses: {
@@ -63,6 +63,46 @@ const chartConfig = {
     color: OTHER_EXPENSES_COLOR,
   },
 } satisfies ChartConfig;
+
+// Custom tooltip content with proper spacing
+const CustomTooltipContent = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="rounded-lg border bg-background p-2 shadow-sm">
+        <div className="grid gap-2">
+          <div className="flex flex-col">
+            <span className="text-[0.70rem] uppercase text-muted-foreground">
+              {new Date(label).toLocaleDateString("en-US", {
+                month: "long",
+                year: "numeric",
+              })}
+            </span>
+          </div>
+          {payload.map((entry: any, index: number) => (
+            <div key={index} className="flex items-center gap-2">
+              <div
+                className="h-2.5 w-2.5 shrink-0 rounded-[2px]"
+                style={{ backgroundColor: entry.color }}
+              />
+              <span className="text-sm text-muted-foreground">
+                {chartConfig[entry.dataKey as keyof typeof chartConfig]?.label}:
+              </span>
+              <span className="text-sm font-medium text-foreground">
+                {new Intl.NumberFormat("en-PH", {
+                  style: "currency",
+                  currency: "PHP",
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 0,
+                }).format(entry.value)}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
 
 export function ChartAreaInteractive({
   data,
@@ -359,20 +399,7 @@ export function ChartAreaInteractive({
                 return formatter.format(value);
               }}
             />
-            <ChartTooltip
-              cursor={false}
-              content={
-                <ChartTooltipContent
-                  labelFormatter={(value) => {
-                    return new Date(value).toLocaleDateString("en-US", {
-                      month: "long",
-                      year: "numeric",
-                    });
-                  }}
-                  indicator="dot"
-                />
-              }
-            />
+            <ChartTooltip cursor={false} content={<CustomTooltipContent />} />
             <Area
               dataKey="previousExpenses"
               type="monotone"

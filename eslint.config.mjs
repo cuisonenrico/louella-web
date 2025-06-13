@@ -22,6 +22,7 @@ const eslintConfig = [
       "prefer-const": "off",
       "react-hooks/exhaustive-deps": "off", // Disable exhaustive deps rule for React hooks
       "react/no-unescaped-entities": "off", // Allow unescaped entities in JSX
+      "no-empty-object-type": "off", // Disable no-empty-object-type rule
     },
   },
 ];
