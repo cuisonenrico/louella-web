@@ -66,16 +66,16 @@ const data = {
       url: "#",
       icon: SettingsIcon,
     },
-    {
-      title: "Get Help",
-      url: "#",
-      icon: HelpCircleIcon,
-    },
-    {
-      title: "Search",
-      url: "#",
-      icon: SearchIcon,
-    },
+    // {
+    //   title: "Get Help",
+    //   url: "#",
+    //   icon: HelpCircleIcon,
+    // },
+    // {
+    //   title: "Search",
+    //   url: "#",
+    //   icon: SearchIcon,
+    // },
   ],
 };
 
