@@ -6,7 +6,7 @@ export interface OtherExpense {
   branch: string;
 }
 
-export interface ExpenseFormData extends Partial<OtherExpense> {}
+export type ExpenseFormData = Partial<OtherExpense>;
 
 export interface ExpenseFilters {
   searchQuery: string;
