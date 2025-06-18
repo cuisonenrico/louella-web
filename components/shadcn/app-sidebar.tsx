@@ -8,6 +8,7 @@ import {
   FolderIcon,
   HelpCircleIcon,
   LayoutDashboardIcon,
+  PersonStandingIcon,
   SearchIcon,
   SettingsIcon,
   UsersIcon,
@@ -57,6 +58,11 @@ const data = {
       title: "Other Expenses",
       url: "/dashboard/other-expenses",
       icon: DollarSignIcon,
+    },
+    {
+      title: "Employees",
+      url: "/dashboard/employee",
+      icon: PersonStandingIcon,
     },
   ],
 
