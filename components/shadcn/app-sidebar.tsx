@@ -6,6 +6,7 @@ import {
   BarChartIcon,
   DollarSignIcon,
   FolderIcon,
+  ForkKnifeCrossedIcon,
   HelpCircleIcon,
   LayoutDashboardIcon,
   PersonStandingIcon,
@@ -63,6 +64,11 @@ const data = {
       title: "Employees",
       url: "/dashboard/employee",
       icon: PersonStandingIcon,
+    },
+    {
+      title: "Products",
+      url: "/dashboard/products",
+      icon: ForkKnifeCrossedIcon,
     },
   ],
 
