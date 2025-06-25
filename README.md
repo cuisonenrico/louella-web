@@ -24,6 +24,8 @@ A comprehensive web application for managing payroll, inventory, and expense ope
 - **Payroll Analytics**: Visual charts showing payroll expenses over time
 - **Multi-Branch Support**: Handle payroll for different bakery branches
 
+![image](https://github.com/user-attachments/assets/950d7e40-4175-41a0-8a19-d9332d9a2c4e)
+
 ### 💰 Other Expenses Management
 
 - **Expense Tracking**: Record and manage miscellaneous business expenses
@@ -34,6 +36,9 @@ A comprehensive web application for managing payroll, inventory, and expense ope
 - **Multi-Branch Support**: Track expenses across different bakery locations
 - **Currency Formatting**: Proper Philippine peso formatting for all amounts
 
+![image](https://github.com/user-attachments/assets/f8170cff-c21e-49d4-ba6f-321d59d8116d)
+
+
 ### 📈 Dashboard & Analytics
 
 - **Payroll Expenses Overview**: Interactive charts displaying yearly payroll trends
@@ -41,6 +46,9 @@ A comprehensive web application for managing payroll, inventory, and expense ope
 - **Expense Analytics**: Track and analyze other business expenses
 - **Data Export**: Export payroll data for reporting purposes
 - **Real-time Updates**: Live data synchronization across all users
+
+![image](https://github.com/user-attachments/assets/77c7911e-4eec-4333-b497-81720d02088a)
+
 
 ### 🔐 Authentication & Security
 
