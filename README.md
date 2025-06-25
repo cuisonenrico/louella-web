@@ -37,6 +37,8 @@ A comprehensive web application for managing payroll, inventory, employee record
 - **Pagination Support**: Efficient data loading with customizable items per page
 - **Real-time Updates**: Live synchronization across all connected clients
 
+![image](https://github.com/user-attachments/assets/7e4e9a10-ea84-4f63-adcd-f962a82a640d)
+
 ### 🥖 Product Management
 
 - **Product Inventory**: Comprehensive product catalog management
@@ -47,6 +49,8 @@ A comprehensive web application for managing payroll, inventory, employee record
 - **Baker-based Organization**: Filter products by baker for better workflow management
 - **Mobile-Optimized Design**: Seamless experience across all devices
 - **Inventory Tracking**: Keep track of bakery products and their assignments
+
+![image](https://github.com/user-attachments/assets/ba557ca8-a0d1-4c41-9fa1-b1b02a74d88d)
 
 ### 💰 Other Expenses Management
 
